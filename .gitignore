@@ -1,0 +1,6 @@
+PstEmptyFolderCleanup-*/
+*.pst
+*.ost
+*.bak
+*.tmp
+*.log
