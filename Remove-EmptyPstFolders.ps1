@@ -337,7 +337,6 @@ function Get-ProtectedEntryIdSet {
         }
     }
 
-    Release-ComObject -ComObject $root
     return $set
 }
 
