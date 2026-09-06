@@ -308,7 +308,7 @@ function Get-ProtectedNameSet {
         $null = $set.Add($name)
     }
 
-    return $set
+    return ,$set
 }
 
 function Get-ProtectedEntryIdSet {
@@ -337,7 +337,7 @@ function Get-ProtectedEntryIdSet {
         }
     }
 
-    return $set
+    return ,$set
 }
 
 function Get-FolderChildrenSnapshot {
@@ -348,11 +348,12 @@ function Get-FolderChildrenSnapshot {
     )
 
     $children = New-Object System.Collections.Generic.List[object]
-    $count = [int]$Folder.Folders.Count
+    $folders = $Folder.Folders
+    $count = [int]$folders.Count
     for ($index = 1; $index -le $count; $index++) {
-        $children.Add($Folder.Folders.Item($index))
+        [void]$children.Add($folders.Item([object]$index))
     }
-    return @($children)
+    return $children.ToArray()
 }
 
 function Test-IsProtectedFolder {
@@ -400,21 +401,21 @@ function Get-FolderInventory {
         [System.Collections.Generic.HashSet[string]]$ProtectedNames
     )
 
-    $records = New-Object System.Collections.Generic.List[object]
+    $records = New-Object System.Collections.ArrayList
     $folderMap = @{}
 
     $stack = New-Object System.Collections.Stack
-    $stack.Push([pscustomobject]@{
+    $stack.Push(@{
             Folder = $RootFolder
             Depth  = 0
         })
 
     while ($stack.Count -gt 0) {
         $node = $stack.Pop()
-        $folder = $node.Folder
-        $depth = [int]$node.Depth
+        $folder = $node['Folder']
+        $depth = [int]$node['Depth']
 
-        $children = Get-FolderChildrenSnapshot -Folder $folder
+        $children = @(Get-FolderChildrenSnapshot -Folder $folder)
         $childCount = $children.Count
         $itemCount = [int]$folder.Items.Count
         $entryId = [string]$folder.EntryID
@@ -455,13 +456,13 @@ function Get-FolderInventory {
             DefaultItemType  = $baseRecord.DefaultItemType
         }
 
-        $records.Add($record)
+        [void]$records.Add($record)
         if ($entryId) {
             $folderMap[$entryId] = $folder
         }
 
         for ($childIndex = $childCount - 1; $childIndex -ge 0; $childIndex--) {
-            $stack.Push([pscustomobject]@{
+            $stack.Push(@{
                     Folder = $children[$childIndex]
                     Depth  = $depth + 1
                 })
@@ -469,7 +470,7 @@ function Get-FolderInventory {
     }
 
     return [pscustomobject]@{
-        Inventory = @($records)
+        Inventory = @($records.ToArray())
         FolderMap = $folderMap
     }
 }
